@@ -61,8 +61,6 @@ module FlaTauchen
 	# Módulo de edição de etiquetas
 	module TiEdita_Etiquetas
 
-		$dir_EditEt = File.join(File.dirname(__FILE__).gsub('\\', '/'), "ImpTag/")
-
 		# Classe para edição
 		class Editar
 
@@ -92,7 +90,8 @@ module FlaTauchen
 			end
 
 
-			Dir.chdir($dir_EditEt)
+			dir_EditEt = File.dirname(Sketchup.active_model.path.gsub('\\', '/'))
+			Dir.chdir(dir_EditEt)
 				if RUBY_PLATFORM =~ /darwin/
 					# Este é um sistema macOS, então abrirá o TextEdit (editor de texto padrão)
 					system("open -a TextEdit tags.tsv")
@@ -110,8 +109,6 @@ module FlaTauchen
 	# Módulo de Geração de etiquetas
 	module TiCria_Etiquetas
 
-		$dir_EditEt = File.join(File.dirname(__FILE__).gsub('\\', '/'), "ImpTag/")
-
 		# Classe para inserção
 		class Inserir
 
@@ -121,7 +118,7 @@ module FlaTauchen
 				tabela=[]
 				@dados=[]
 
-				arquivo_tsv = File.join(File.dirname(__FILE__).gsub('\\', '/'), "ImpTag/tags.tsv")
+				arquivo_tsv = File.join(File.dirname(Sketchup.active_model.path).gsub('\\', '/'), "tags.tsv")
 				puts arquivo_tsv.to_s
 
 				# Ler o arquivo TSV
