@@ -18,11 +18,15 @@ unless file_loaded?(__FILE__)
 		tooltipedita		= "Abre o arquivo .tsv para editar a estrutura das etiquetas."
 		toolnomecria		= "Cria etiquetas"
 		tooltipcria			= "Cria as etiquetas no modelo atual com base no arquivo .tsv."
+		toolnomeexp			= "Exporta etiquetas"
+		tooltipexp			= "Exporta as etiquetas do modelo atual em um arquivo .tsv."
 	else
 		toolnomeedita		= "Edit tags"
 		tooltipedita		= "Open the .tsv file to edit the tag structure."
 		toolnomecria		= "Create tags"
 		tooltipcria			= "Creates the tags in the current model based on the .tsv file."
+		toolnomeexp			= "Export tags"
+		tooltipexp			= "Exports the current model tags to a .tsv file."
 	end
 
 	# Define a toolbar
@@ -49,6 +53,17 @@ unless file_loaded?(__FILE__)
 	cret.tooltip = toolnomecria
 	cret.status_bar_text = tooltipcria
 	barraet.add_item cret
+
+	# Executa o módulo do botão de exportação de etiquetas
+	exet = UI::Command.new(toolnomeexp) do
+		Sketchup.active_model.select_tool FlaTauchen::TiExp_Etiquetas::Exportar.new
+	end
+
+	# Define Características do botão de exportação de etiquetas
+	exet.small_icon = exet.large_icon = File.join(File.dirname(__FILE__).gsub('\\', '/'), "Img/exporta.png")
+	exet.tooltip = toolnomeexp
+	exet.status_bar_text = tooltipexp
+	barraet.add_item exet
 
 	# Mostra a toolbar e define a posição
 	barraet.show unless barraet.get_last_state == 0
@@ -191,4 +206,66 @@ module FlaTauchen
 			end
 		end
 	end
+
+	module TiExp_Etiquetas
+
+		class Exportar
+
+			def initialize
+				exportar_para_tsv
+			end
+
+			def exportar_para_tsv
+
+				model = Sketchup.active_model
+				layers = model.layers
+				etiquetas = []
+
+				etiquetas_nivel_0 = []
+				layers.each_layer do |layer|
+				  etiquetas_nivel_0 << layer.name
+				end
+				etiquetas << { 'Raiz' => etiquetas_nivel_0 }
+
+				layers.each_folder do |folder|
+				  etiquetas_nivel_1 = []
+				  #etiquetas_nivel_1 << folder.name
+
+				  folder.each_layer do |layer|
+					etiquetas_nivel_1 << "#{layer.name}"  # Ajustando a tabulação para ficar na mesma linha do nome da pasta
+				  end
+
+				  folder.each_folder do |sub_folder|
+					etiquetas_nivel_1 << "\n\t#{sub_folder.name}"  # Adicionando uma nova linha antes das subpastas de nível 2
+					sub_folder.each_layer do |layer|
+					  etiquetas_nivel_1 << "#{layer.name}"  # Removendo a tabulação extra das etiquetas de nível 2
+					end
+				  end
+
+				  etiquetas << { folder.name => etiquetas_nivel_1 }
+				end
+
+				caminho = UI.savepanel("Salvar Etiquetas", File.dirname(Sketchup.active_model.path).gsub('\\', '/'), "tsv.tsv")
+
+				if caminho
+				  File.open(caminho, 'w') do |file|
+					etiquetas.each do |etiqueta|
+					  etiqueta.each do |folder, labels|
+						file.print folder
+						labels.each { |label| file.print "\t#{label}" }
+						file.puts
+					  end
+					end
+				  end
+				  puts "Etiquetas exportadas para: #{caminho}"
+				else
+				  puts 'Operação de exportação cancelada.'
+				end
+
+			end
+
+		end
+
+	end
+
 end
